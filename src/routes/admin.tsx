@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { CATEGORIES, resolveImageUrl, type DBProduct } from "@/lib/products-db";
@@ -20,7 +20,7 @@ type Form = {
   description: string;
   badge: string;
   active: boolean;
-  sort_order: number;
+  stock: number;
   image_url: string | null;
 };
 
@@ -31,9 +31,12 @@ const empty: Form = {
   description: "",
   badge: "",
   active: true,
-  sort_order: 0,
+  stock: 1,
   image_url: null,
 };
+
+type FilterCat = "All" | (typeof CATEGORIES)[number];
+type FilterStatus = "all" | "live" | "hidden" | "out";
 
 function Admin() {
   const { user, isAdmin, loading, signOut } = useAuth();
@@ -43,6 +46,9 @@ function Admin() {
   const [form, setForm] = useState<Form>(empty);
   const [editing, setEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterCat, setFilterCat] = useState<FilterCat>("All");
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) navigate({ to: "/login" });
@@ -52,7 +58,7 @@ function Admin() {
     const { data, error } = await supabase
       .from("products")
       .select("*")
-      .order("sort_order", { ascending: true });
+      .order("created_at", { ascending: false });
     if (error) {
       toast.error(error.message);
       return;
@@ -63,6 +69,27 @@ function Admin() {
   useEffect(() => {
     if (isAdmin) load();
   }, [isAdmin, load]);
+
+  const stats = useMemo(() => {
+    const totalUnits = items.reduce((n, p) => n + (p.stock ?? 0), 0);
+    const live = items.filter((p) => p.active).length;
+    const out = items.filter((p) => (p.stock ?? 0) <= 0).length;
+    return { total: items.length, live, out, totalUnits };
+  }, [items]);
+
+  const filtered = useMemo(() => {
+    return items.filter((p) => {
+      if (filterCat !== "All" && p.category !== filterCat) return false;
+      if (filterStatus === "live" && !p.active) return false;
+      if (filterStatus === "hidden" && p.active) return false;
+      if (filterStatus === "out" && (p.stock ?? 0) > 0) return false;
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        if (!p.name.toLowerCase().includes(q) && !(p.description ?? "").toLowerCase().includes(q)) return false;
+      }
+      return true;
+    });
+  }, [items, filterCat, filterStatus, search]);
 
   const reset = () => {
     setForm(empty);
@@ -78,7 +105,7 @@ function Admin() {
       description: p.description ?? "",
       badge: p.badge ?? "",
       active: p.active,
-      sort_order: p.sort_order,
+      stock: p.stock ?? 0,
       image_url: p.image_url,
     });
     setEditing(true);
@@ -113,7 +140,7 @@ function Admin() {
       description: form.description || null,
       badge: form.badge || null,
       active: form.active,
-      sort_order: form.sort_order,
+      stock: Math.max(0, Math.floor(Number(form.stock) || 0)),
       image_url: form.image_url,
     };
 
@@ -145,6 +172,13 @@ function Admin() {
     load();
   };
 
+  const adjustStock = async (p: DBProduct, delta: number) => {
+    const next = Math.max(0, (p.stock ?? 0) + delta);
+    const { error } = await supabase.from("products").update({ stock: next }).eq("id", p.id);
+    if (error) return toast.error(error.message);
+    load();
+  };
+
   if (loading || !isAdmin) {
     return (
       <div className="flex min-h-screen items-center justify-center text-muted-foreground">
@@ -156,8 +190,8 @@ function Admin() {
   return (
     <div className="min-h-screen bg-secondary/30">
       {/* Top bar */}
-      <header className="border-b border-border bg-background">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 md:px-8">
+      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
           <div>
             <p className="editorial-eyebrow text-primary">Admin</p>
             <h1 className="font-serif text-2xl">The Peng Collection</h1>
@@ -174,10 +208,20 @@ function Admin() {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-6xl gap-8 px-5 py-10 md:grid-cols-12 md:px-8">
+      {/* Stat cards */}
+      <div className="mx-auto max-w-7xl px-5 pt-8 md:px-8">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Stat label="Pieces" value={stats.total} />
+          <Stat label="Live" value={stats.live} accent />
+          <Stat label="Sold out" value={stats.out} warn={stats.out > 0} />
+          <Stat label="Units in stock" value={stats.totalUnits} />
+        </div>
+      </div>
+
+      <div className="mx-auto grid max-w-7xl gap-8 px-5 py-8 md:grid-cols-12 md:px-8">
         {/* Form */}
         <section className="md:col-span-5">
-          <div className="sticky top-6 bg-card p-6" style={{ boxShadow: "var(--shadow-soft)" }}>
+          <div className="sticky top-24 bg-card p-6" style={{ boxShadow: "var(--shadow-soft)" }}>
             <p className="editorial-eyebrow text-primary">
               {editing ? "Edit piece" : "Add piece"}
             </p>
@@ -195,8 +239,15 @@ function Admin() {
                     {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </Field>
-                <Field label="Sort order">
-                  <input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: +e.target.value })} className={inputCls} />
+                <Field label="Stock (units)">
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={form.stock}
+                    onChange={(e) => setForm({ ...form, stock: +e.target.value })}
+                    className={inputCls}
+                  />
                 </Field>
               </div>
               <Field label="Price (free text)">
@@ -232,7 +283,7 @@ function Admin() {
               </label>
 
               <div className="flex gap-3 pt-2">
-                <button type="submit" disabled={busy} className="flex-1 bg-primary py-3 editorial-eyebrow text-primary-foreground hover:bg-burgundy disabled:opacity-50">
+                <button type="submit" disabled={busy} className="flex-1 bg-primary py-3 editorial-eyebrow text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
                   {busy ? "Saving…" : editing ? "Save changes" : "Add piece"}
                 </button>
                 {editing && (
@@ -247,37 +298,93 @@ function Admin() {
 
         {/* List */}
         <section className="md:col-span-7">
-          <div className="flex items-center justify-between">
-            <p className="editorial-eyebrow text-primary">Collection · {items.length}</p>
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search pieces…"
+                className={`${inputCls} flex-1 min-w-40`}
+              />
+              <select value={filterCat} onChange={(e) => setFilterCat(e.target.value as FilterCat)} className={inputCls + " w-auto"}>
+                <option value="All">All categories</option>
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {([
+                ["all", "All"],
+                ["live", "Live"],
+                ["hidden", "Hidden"],
+                ["out", "Sold out"],
+              ] as const).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => setFilterStatus(key)}
+                  className={`editorial-eyebrow px-3 py-1.5 text-xs transition-colors ${
+                    filterStatus === key
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-card text-foreground/70 hover:text-primary"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="mt-4 space-y-3">
-            {items.length === 0 && (
-              <p className="text-sm text-muted-foreground">No pieces yet. Add your first one →</p>
+
+          <p className="mt-4 editorial-eyebrow text-muted-foreground">
+            Showing {filtered.length} of {items.length}
+          </p>
+
+          <div className="mt-3 space-y-3">
+            {filtered.length === 0 && (
+              <div className="bg-card p-10 text-center text-sm text-muted-foreground" style={{ boxShadow: "var(--shadow-soft)" }}>
+                {items.length === 0 ? "No pieces yet — add your first one →" : "Nothing matches these filters."}
+              </div>
             )}
-            {items.map((p) => (
-              <article key={p.id} className="flex items-center gap-4 bg-card p-3" style={{ boxShadow: "var(--shadow-soft)" }}>
-                <div className="h-20 w-20 flex-shrink-0 bg-muted">
-                  {p.image_url && (
-                    <img src={resolveImageUrl(p.image_url)} alt={p.name} className="h-full w-full object-cover" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="editorial-eyebrow text-muted-foreground">{p.category}</p>
-                    {!p.active && <span className="editorial-eyebrow text-destructive">· Hidden</span>}
+            {filtered.map((p) => {
+              const stock = p.stock ?? 0;
+              const isOut = stock <= 0;
+              return (
+                <article key={p.id} className="flex items-center gap-4 bg-card p-3" style={{ boxShadow: "var(--shadow-soft)" }}>
+                  <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden bg-muted">
+                    {p.image_url && (
+                      <img src={resolveImageUrl(p.image_url)} alt={p.name} className="h-full w-full object-cover" />
+                    )}
                   </div>
-                  <h3 className="truncate font-serif text-lg">{p.name}</h3>
-                  <p className="truncate text-xs text-muted-foreground">{p.price}</p>
-                </div>
-                <div className="flex flex-col gap-1 text-xs">
-                  <button onClick={() => startEdit(p)} className="editorial-eyebrow text-foreground hover:text-primary">Edit</button>
-                  <button onClick={() => toggleActive(p)} className="editorial-eyebrow text-muted-foreground hover:text-primary">
-                    {p.active ? "Hide" : "Show"}
-                  </button>
-                  <button onClick={() => onDelete(p.id)} className="editorial-eyebrow text-muted-foreground hover:text-destructive">Delete</button>
-                </div>
-              </article>
-            ))}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="editorial-eyebrow text-muted-foreground">{p.category}</span>
+                      {!p.active && (
+                        <span className="editorial-eyebrow rounded bg-foreground/10 px-1.5 py-0.5 text-[10px] text-foreground/70">Hidden</span>
+                      )}
+                      {isOut && (
+                        <span className="editorial-eyebrow rounded bg-destructive/15 px-1.5 py-0.5 text-[10px] text-destructive">Sold out</span>
+                      )}
+                      {!isOut && stock <= 3 && (
+                        <span className="editorial-eyebrow rounded bg-primary/15 px-1.5 py-0.5 text-[10px] text-primary">Low · {stock}</span>
+                      )}
+                    </div>
+                    <h3 className="truncate font-serif text-lg">{p.name}</h3>
+                    <p className="truncate text-xs text-muted-foreground">{p.price}</p>
+                    <div className="mt-1.5 flex items-center gap-1.5">
+                      <span className="editorial-eyebrow text-[10px] text-muted-foreground">Stock</span>
+                      <button onClick={() => adjustStock(p, -1)} className="h-6 w-6 border border-input text-xs hover:border-primary" aria-label="Decrease stock">−</button>
+                      <span className="min-w-6 text-center text-sm tabular-nums">{stock}</span>
+                      <button onClick={() => adjustStock(p, +1)} className="h-6 w-6 border border-input text-xs hover:border-primary" aria-label="Increase stock">+</button>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 text-xs">
+                    <button onClick={() => startEdit(p)} className="editorial-eyebrow text-foreground hover:text-primary">Edit</button>
+                    <button onClick={() => toggleActive(p)} className="editorial-eyebrow text-muted-foreground hover:text-primary">
+                      {p.active ? "Hide" : "Show"}
+                    </button>
+                    <button onClick={() => onDelete(p.id)} className="editorial-eyebrow text-muted-foreground hover:text-destructive">Delete</button>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </section>
       </div>
@@ -285,13 +392,27 @@ function Admin() {
   );
 }
 
-const inputCls = "w-full border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none";
+const inputCls = "border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
       <label className="editorial-eyebrow text-foreground">{label}</label>
       <div className="mt-1.5">{children}</div>
+    </div>
+  );
+}
+
+function Stat({ label, value, accent, warn }: { label: string; value: number; accent?: boolean; warn?: boolean }) {
+  return (
+    <div
+      className={`p-4 ${accent ? "bg-primary text-primary-foreground" : "bg-card"}`}
+      style={{ boxShadow: "var(--shadow-soft)" }}
+    >
+      <p className={`editorial-eyebrow ${accent ? "text-primary-foreground/85" : warn ? "text-destructive" : "text-muted-foreground"}`}>
+        {label}
+      </p>
+      <p className="mt-1 font-serif text-3xl tabular-nums">{value}</p>
     </div>
   );
 }
