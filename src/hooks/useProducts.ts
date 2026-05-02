@@ -13,6 +13,7 @@ export function useProducts() {
       .select("*")
       .eq("active", true)
       .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false })
       .then(({ data, error }) => {
         if (cancelled) return;
         if (!error && data) setProducts(data as DBProduct[]);
