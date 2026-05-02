@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { SITE } from "@/lib/site";
+import { BagButton } from "@/components/BagButton";
 
 const nav = [
   { to: "/", label: "Home" },
@@ -32,24 +33,27 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <a
-          href={SITE.instagramUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="hidden editorial-eyebrow text-primary md:inline-block"
-        >
-          @{SITE.instagram}
-        </a>
-        <button
-          onClick={() => setOpen((v) => !v)}
-          className="md:hidden"
-          aria-label="Toggle menu"
-        >
-          <div className="space-y-1.5">
-            <span className="block h-px w-6 bg-foreground" />
-            <span className="block h-px w-6 bg-foreground" />
-          </div>
-        </button>
+        <div className="flex items-center gap-3">
+          <a
+            href={SITE.instagramUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="hidden editorial-eyebrow text-primary lg:inline-block"
+          >
+            @{SITE.instagram}
+          </a>
+          <BagButton />
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="md:hidden"
+            aria-label="Toggle menu"
+          >
+            <div className="space-y-1.5">
+              <span className="block h-px w-6 bg-foreground" />
+              <span className="block h-px w-6 bg-foreground" />
+            </div>
+          </button>
+        </div>
       </div>
       {open && (
         <div className="border-t border-border bg-background md:hidden">

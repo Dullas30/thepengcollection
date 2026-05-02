@@ -1,7 +1,28 @@
-import { waLink } from "@/lib/site";
+import { useCart } from "@/lib/cart";
 import { resolveImageUrl, type DBProduct } from "@/lib/products-db";
+import { toast } from "sonner";
 
 export function ProductCard({ product, index = 0 }: { product: DBProduct; index?: number }) {
+  const { add, setOpen } = useCart();
+  const outOfStock = product.stock !== undefined && product.stock <= 0;
+
+  const onAdd = () => {
+    if (outOfStock) {
+      toast.info("This piece is currently sold out — check back soon.");
+      return;
+    }
+    add({
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      price: product.price,
+      image_url: product.image_url,
+    });
+    toast.success(`${product.name} added to bag`, {
+      action: { label: "View Bag", onClick: () => setOpen(true) },
+    });
+  };
+
   return (
     <article
       className="group fade-up"
@@ -25,9 +46,14 @@ export function ProductCard({ product, index = 0 }: { product: DBProduct; index?
             {product.badge}
           </span>
         )}
+        {outOfStock && (
+          <span className="editorial-eyebrow absolute right-3 top-3 bg-foreground/90 px-2.5 py-1 text-background">
+            Sold out
+          </span>
+        )}
       </div>
       <div className="mt-4 flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <p className="editorial-eyebrow text-muted-foreground">{product.category}</p>
           <h3 className="mt-1 font-serif text-lg leading-tight">{product.name}</h3>
           {product.description && (
@@ -36,16 +62,13 @@ export function ProductCard({ product, index = 0 }: { product: DBProduct; index?
         </div>
         <p className="font-serif text-base text-primary whitespace-nowrap">{product.price}</p>
       </div>
-      <a
-        href={waLink(
-          `Hi Fatima 🌹 I'd like to order: ${product.name} (${product.price}). Is it available?`
-        )}
-        target="_blank"
-        rel="noreferrer"
-        className="mt-3 inline-block editorial-eyebrow border-b border-foreground/40 pb-1 text-foreground transition-colors hover:border-primary hover:text-primary"
+      <button
+        onClick={onAdd}
+        disabled={outOfStock}
+        className="mt-3 inline-flex items-center gap-2 editorial-eyebrow border-b border-foreground/40 pb-1 text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
       >
-        Order →
-      </a>
+        {outOfStock ? "Sold out" : "Add to Bag +"}
+      </button>
     </article>
   );
 }
