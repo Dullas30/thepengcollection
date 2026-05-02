@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useProducts } from "@/hooks/useProducts";
-import { resolveImageUrl } from "@/lib/products-db";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/lookbook")({
   head: () => ({
@@ -17,9 +17,36 @@ export const Route = createFileRoute("/lookbook")({
   component: Lookbook,
 });
 
+type LookbookImage = {
+  id: string;
+  image_url: string;
+  caption: string | null;
+  sort_order: number;
+};
+
+function publicUrl(path: string) {
+  if (path.startsWith("http")) return path;
+  return supabase.storage.from("lookbook").getPublicUrl(path).data.publicUrl;
+}
+
 function Lookbook() {
-  const { products, loading } = useProducts();
-  const items = products.filter((p) => p.image_url).slice(0, 9);
+  const [items, setItems] = useState<LookbookImage[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    supabase
+      .from("lookbook_images")
+      .select("*")
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (cancelled) return;
+        setItems((data ?? []) as LookbookImage[]);
+        setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-14 md:px-8 md:py-20">
@@ -36,22 +63,28 @@ function Lookbook() {
 
       {loading ? (
         <p className="mt-20 text-center text-muted-foreground">Loading…</p>
+      ) : items.length === 0 ? (
+        <p className="mt-20 text-center text-muted-foreground">
+          New looks dropping soon. Follow @the_peng_collection_ on Instagram for first access.
+        </p>
       ) : (
         <div className="mt-14 grid auto-rows-[200px] grid-cols-2 gap-3 md:auto-rows-[280px] md:grid-cols-3 md:gap-5">
-          {items.map((p, i) => (
+          {items.map((img, i) => (
             <figure
-              key={p.id}
+              key={img.id}
               className={`group relative overflow-hidden bg-muted ${i % 5 === 0 ? "row-span-2" : ""}`}
             >
               <img
-                src={resolveImageUrl(p.image_url)}
-                alt={p.name}
+                src={publicUrl(img.image_url)}
+                alt={img.caption ?? "Lookbook image"}
                 loading="lazy"
                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
-              <figcaption className="absolute bottom-3 left-3 bg-background/85 px-3 py-1.5 editorial-eyebrow text-primary">
-                {p.category}
-              </figcaption>
+              {img.caption && (
+                <figcaption className="absolute bottom-3 left-3 bg-background/85 px-3 py-1.5 editorial-eyebrow text-primary">
+                  {img.caption}
+                </figcaption>
+              )}
             </figure>
           ))}
         </div>

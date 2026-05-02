@@ -36,7 +36,7 @@ const empty: Form = {
 };
 
 type FilterCat = "All" | (typeof CATEGORIES)[number];
-type FilterStatus = "all" | "live" | "hidden" | "out";
+type FilterStatus = "all" | "in" | "out";
 
 function Admin() {
   const { user, isAdmin, loading, signOut } = useAuth();
@@ -72,16 +72,15 @@ function Admin() {
 
   const stats = useMemo(() => {
     const totalUnits = items.reduce((n, p) => n + (p.stock ?? 0), 0);
-    const live = items.filter((p) => p.active).length;
+    const inStock = items.filter((p) => (p.stock ?? 0) > 0).length;
     const out = items.filter((p) => (p.stock ?? 0) <= 0).length;
-    return { total: items.length, live, out, totalUnits };
+    return { total: items.length, inStock, out, totalUnits };
   }, [items]);
 
   const filtered = useMemo(() => {
     return items.filter((p) => {
       if (filterCat !== "All" && p.category !== filterCat) return false;
-      if (filterStatus === "live" && !p.active) return false;
-      if (filterStatus === "hidden" && p.active) return false;
+      if (filterStatus === "in" && (p.stock ?? 0) <= 0) return false;
       if (filterStatus === "out" && (p.stock ?? 0) > 0) return false;
       if (search.trim()) {
         const q = search.toLowerCase();
@@ -163,15 +162,6 @@ function Admin() {
     load();
   };
 
-  const toggleActive = async (p: DBProduct) => {
-    const { error } = await supabase
-      .from("products")
-      .update({ active: !p.active })
-      .eq("id", p.id);
-    if (error) return toast.error(error.message);
-    load();
-  };
-
   const adjustStock = async (p: DBProduct, delta: number) => {
     const next = Math.max(0, (p.stock ?? 0) + delta);
     const { error } = await supabase.from("products").update({ stock: next }).eq("id", p.id);
@@ -197,6 +187,7 @@ function Admin() {
             <h1 className="font-serif text-2xl">The Peng Collection</h1>
           </div>
           <div className="flex items-center gap-4">
+            <Link to="/admin/lookbook" className="editorial-eyebrow text-foreground hover:text-primary">Lookbook →</Link>
             <Link to="/" className="editorial-eyebrow text-foreground hover:text-primary">View site →</Link>
             <button
               onClick={() => { signOut(); navigate({ to: "/" }); }}
@@ -212,9 +203,9 @@ function Admin() {
       <div className="mx-auto max-w-7xl px-5 pt-8 md:px-8">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <Stat label="Pieces" value={stats.total} />
-          <Stat label="Live" value={stats.live} accent />
+          <Stat label="In stock" value={stats.inStock} accent />
           <Stat label="Sold out" value={stats.out} warn={stats.out > 0} />
-          <Stat label="Units in stock" value={stats.totalUnits} />
+          <Stat label="Units total" value={stats.totalUnits} />
         </div>
       </div>
 
@@ -277,11 +268,6 @@ function Admin() {
                 </div>
               </Field>
 
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />
-                Visible on storefront
-              </label>
-
               <div className="flex gap-3 pt-2">
                 <button type="submit" disabled={busy} className="flex-1 bg-primary py-3 editorial-eyebrow text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
                   {busy ? "Saving…" : editing ? "Save changes" : "Add piece"}
@@ -314,8 +300,7 @@ function Admin() {
             <div className="flex flex-wrap gap-1">
               {([
                 ["all", "All"],
-                ["live", "Live"],
-                ["hidden", "Hidden"],
+                ["in", "In stock"],
                 ["out", "Sold out"],
               ] as const).map(([key, label]) => (
                 <button
@@ -356,9 +341,6 @@ function Admin() {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className="editorial-eyebrow text-muted-foreground">{p.category}</span>
-                      {!p.active && (
-                        <span className="editorial-eyebrow rounded bg-foreground/10 px-1.5 py-0.5 text-[10px] text-foreground/70">Hidden</span>
-                      )}
                       {isOut && (
                         <span className="editorial-eyebrow rounded bg-destructive/15 px-1.5 py-0.5 text-[10px] text-destructive">Sold out</span>
                       )}
@@ -377,9 +359,6 @@ function Admin() {
                   </div>
                   <div className="flex flex-col items-end gap-1 text-xs">
                     <button onClick={() => startEdit(p)} className="editorial-eyebrow text-foreground hover:text-primary">Edit</button>
-                    <button onClick={() => toggleActive(p)} className="editorial-eyebrow text-muted-foreground hover:text-primary">
-                      {p.active ? "Hide" : "Show"}
-                    </button>
                     <button onClick={() => onDelete(p.id)} className="editorial-eyebrow text-muted-foreground hover:text-destructive">Delete</button>
                   </div>
                 </article>
