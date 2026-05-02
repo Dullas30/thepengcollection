@@ -26,6 +26,7 @@ export type Database = {
           name: string
           price: string
           sort_order: number
+          stock: number
           updated_at: string
         }
         Insert: {
@@ -39,6 +40,7 @@ export type Database = {
           name: string
           price?: string
           sort_order?: number
+          stock?: number
           updated_at?: string
         }
         Update: {
@@ -52,6 +54,7 @@ export type Database = {
           name?: string
           price?: string
           sort_order?: number
+          stock?: number
           updated_at?: string
         }
         Relationships: []
