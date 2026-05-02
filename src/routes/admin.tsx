@@ -197,6 +197,7 @@ function Admin() {
             <h1 className="font-serif text-2xl">The Peng Collection</h1>
           </div>
           <div className="flex items-center gap-4">
+            <Link to="/admin/lookbook" className="editorial-eyebrow text-foreground hover:text-primary">Lookbook →</Link>
             <Link to="/" className="editorial-eyebrow text-foreground hover:text-primary">View site →</Link>
             <button
               onClick={() => { signOut(); navigate({ to: "/" }); }}
@@ -277,11 +278,6 @@ function Admin() {
                 </div>
               </Field>
 
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />
-                Visible on storefront
-              </label>
-
               <div className="flex gap-3 pt-2">
                 <button type="submit" disabled={busy} className="flex-1 bg-primary py-3 editorial-eyebrow text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
                   {busy ? "Saving…" : editing ? "Save changes" : "Add piece"}
@@ -356,9 +352,6 @@ function Admin() {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className="editorial-eyebrow text-muted-foreground">{p.category}</span>
-                      {!p.active && (
-                        <span className="editorial-eyebrow rounded bg-foreground/10 px-1.5 py-0.5 text-[10px] text-foreground/70">Hidden</span>
-                      )}
                       {isOut && (
                         <span className="editorial-eyebrow rounded bg-destructive/15 px-1.5 py-0.5 text-[10px] text-destructive">Sold out</span>
                       )}
@@ -377,9 +370,6 @@ function Admin() {
                   </div>
                   <div className="flex flex-col items-end gap-1 text-xs">
                     <button onClick={() => startEdit(p)} className="editorial-eyebrow text-foreground hover:text-primary">Edit</button>
-                    <button onClick={() => toggleActive(p)} className="editorial-eyebrow text-muted-foreground hover:text-primary">
-                      {p.active ? "Hide" : "Show"}
-                    </button>
                     <button onClick={() => onDelete(p.id)} className="editorial-eyebrow text-muted-foreground hover:text-destructive">Delete</button>
                   </div>
                 </article>
