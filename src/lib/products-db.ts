@@ -9,6 +9,7 @@ export type DBProduct = {
   image_url: string | null;
   badge: string | null;
   sort_order: number;
+  stock: number;
   active: boolean;
 };
 
@@ -33,7 +34,6 @@ export function resolveImageUrl(image_url: string | null): string {
   if (!image_url) return "";
   if (image_url.startsWith("http")) return image_url;
   if (image_url.startsWith("/seed/")) return seedMap[image_url] ?? "";
-  // Storage path like "products/abc.jpg"
   const { data } = supabase.storage.from("product-images").getPublicUrl(image_url);
   return data.publicUrl;
 }
