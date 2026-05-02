@@ -36,7 +36,7 @@ const empty: Form = {
 };
 
 type FilterCat = "All" | (typeof CATEGORIES)[number];
-type FilterStatus = "all" | "live" | "hidden" | "out";
+type FilterStatus = "all" | "in" | "out";
 
 function Admin() {
   const { user, isAdmin, loading, signOut } = useAuth();
@@ -72,16 +72,15 @@ function Admin() {
 
   const stats = useMemo(() => {
     const totalUnits = items.reduce((n, p) => n + (p.stock ?? 0), 0);
-    const live = items.filter((p) => p.active).length;
+    const inStock = items.filter((p) => (p.stock ?? 0) > 0).length;
     const out = items.filter((p) => (p.stock ?? 0) <= 0).length;
-    return { total: items.length, live, out, totalUnits };
+    return { total: items.length, inStock, out, totalUnits };
   }, [items]);
 
   const filtered = useMemo(() => {
     return items.filter((p) => {
       if (filterCat !== "All" && p.category !== filterCat) return false;
-      if (filterStatus === "live" && !p.active) return false;
-      if (filterStatus === "hidden" && p.active) return false;
+      if (filterStatus === "in" && (p.stock ?? 0) <= 0) return false;
       if (filterStatus === "out" && (p.stock ?? 0) > 0) return false;
       if (search.trim()) {
         const q = search.toLowerCase();
@@ -163,15 +162,6 @@ function Admin() {
     load();
   };
 
-  const toggleActive = async (p: DBProduct) => {
-    const { error } = await supabase
-      .from("products")
-      .update({ active: !p.active })
-      .eq("id", p.id);
-    if (error) return toast.error(error.message);
-    load();
-  };
-
   const adjustStock = async (p: DBProduct, delta: number) => {
     const next = Math.max(0, (p.stock ?? 0) + delta);
     const { error } = await supabase.from("products").update({ stock: next }).eq("id", p.id);
@@ -213,9 +203,9 @@ function Admin() {
       <div className="mx-auto max-w-7xl px-5 pt-8 md:px-8">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <Stat label="Pieces" value={stats.total} />
-          <Stat label="Live" value={stats.live} accent />
+          <Stat label="In stock" value={stats.inStock} accent />
           <Stat label="Sold out" value={stats.out} warn={stats.out > 0} />
-          <Stat label="Units in stock" value={stats.totalUnits} />
+          <Stat label="Units total" value={stats.totalUnits} />
         </div>
       </div>
 
@@ -310,8 +300,7 @@ function Admin() {
             <div className="flex flex-wrap gap-1">
               {([
                 ["all", "All"],
-                ["live", "Live"],
-                ["hidden", "Hidden"],
+                ["in", "In stock"],
                 ["out", "Sold out"],
               ] as const).map(([key, label]) => (
                 <button
