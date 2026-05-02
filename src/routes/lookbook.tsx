@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { products } from "@/lib/products";
+import { useProducts } from "@/hooks/useProducts";
+import { resolveImageUrl } from "@/lib/products-db";
 
 export const Route = createFileRoute("/lookbook")({
   head: () => ({
@@ -16,17 +17,10 @@ export const Route = createFileRoute("/lookbook")({
   component: Lookbook,
 });
 
-// Editorial collage — masonry-ish using existing product imagery
-const layout = [
-  { img: products[0].image, span: "row-span-2", label: "Bloom" },
-  { img: products[2].image, span: "", label: "Crimson" },
-  { img: products[4].image, span: "", label: "Sun-soaked" },
-  { img: products[1].image, span: "row-span-2", label: "Heritage" },
-  { img: products[3].image, span: "", label: "Earth" },
-  { img: products[5].image, span: "", label: "Gifted" },
-];
-
 function Lookbook() {
+  const { products, loading } = useProducts();
+  const items = products.filter((p) => p.image_url).slice(0, 9);
+
   return (
     <div className="mx-auto max-w-7xl px-5 py-14 md:px-8 md:py-20">
       <div className="max-w-2xl">
@@ -40,24 +34,28 @@ function Lookbook() {
         </p>
       </div>
 
-      <div className="mt-14 grid auto-rows-[180px] grid-cols-2 gap-3 md:auto-rows-[260px] md:grid-cols-3 md:gap-5">
-        {layout.map((l, i) => (
-          <figure
-            key={i}
-            className={`group relative overflow-hidden bg-muted ${l.span}`}
-          >
-            <img
-              src={l.img}
-              alt={l.label}
-              loading="lazy"
-              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-            <figcaption className="absolute bottom-3 left-3 bg-background/85 px-3 py-1.5 editorial-eyebrow text-primary">
-              {l.label}
-            </figcaption>
-          </figure>
-        ))}
-      </div>
+      {loading ? (
+        <p className="mt-20 text-center text-muted-foreground">Loading…</p>
+      ) : (
+        <div className="mt-14 grid auto-rows-[200px] grid-cols-2 gap-3 md:auto-rows-[280px] md:grid-cols-3 md:gap-5">
+          {items.map((p, i) => (
+            <figure
+              key={p.id}
+              className={`group relative overflow-hidden bg-muted ${i % 5 === 0 ? "row-span-2" : ""}`}
+            >
+              <img
+                src={resolveImageUrl(p.image_url)}
+                alt={p.name}
+                loading="lazy"
+                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <figcaption className="absolute bottom-3 left-3 bg-background/85 px-3 py-1.5 editorial-eyebrow text-primary">
+                {p.category}
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      )}
 
       <div className="mt-16 border-t border-border pt-10 text-center">
         <p className="font-serif text-2xl italic">More moments live on Instagram.</p>
