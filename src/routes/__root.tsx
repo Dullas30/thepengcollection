@@ -2,7 +2,9 @@ import { Outlet, Link, createRootRoute, HeadContent, Scripts, useRouterState } f
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { WhatsAppFab } from "@/components/WhatsAppFab";
+import { BagDrawer } from "@/components/BagDrawer";
 import { AuthProvider } from "@/lib/auth";
+import { CartProvider } from "@/lib/cart";
 import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
@@ -80,15 +82,18 @@ function RootComponent() {
   const isAdminArea = path.startsWith("/admin") || path === "/login";
   return (
     <AuthProvider>
-      <div className="flex min-h-screen flex-col">
-        {!isAdminArea && <SiteHeader />}
-        <main className="flex-1">
-          <Outlet />
-        </main>
-        {!isAdminArea && <SiteFooter />}
-        {!isAdminArea && <WhatsAppFab />}
-        <Toaster position="top-center" richColors />
-      </div>
+      <CartProvider>
+        <div className="flex min-h-screen flex-col">
+          {!isAdminArea && <SiteHeader />}
+          <main className="flex-1">
+            <Outlet />
+          </main>
+          {!isAdminArea && <SiteFooter />}
+          {!isAdminArea && <WhatsAppFab />}
+          {!isAdminArea && <BagDrawer />}
+          <Toaster position="top-center" richColors />
+        </div>
+      </CartProvider>
     </AuthProvider>
   );
 }
