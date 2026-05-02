@@ -32,14 +32,14 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "The Peng Collection — Abayas, Silk Scarfs & Giftboxes" },
+      { title: "Lovable App" },
       {
         name: "description",
         content:
           "Curated abayas, silk scarfs, ready-to-wear dresses and signature giftboxes by Fatima Danjuma. Worldwide delivery from Minna, Nigeria.",
       },
       { name: "author", content: "The Peng Collection" },
-      { property: "og:title", content: "The Peng Collection — Daily Dose of Trend" },
+      { property: "og:title", content: "Lovable App" },
       {
         property: "og:description",
         content:
@@ -47,6 +47,10 @@ export const Route = createRootRoute({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Lovable App" },
+      { name: "description", content: "The Peng Collection is an e-commerce website for fashion and gift items." },
+      { property: "og:description", content: "The Peng Collection is an e-commerce website for fashion and gift items." },
+      { name: "twitter:description", content: "The Peng Collection is an e-commerce website for fashion and gift items." },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
