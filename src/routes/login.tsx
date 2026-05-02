@@ -11,8 +11,9 @@ export const Route = createFileRoute("/login")({
 });
 
 function Login() {
-  const { signIn, user, isAdmin, loading } = useAuth();
+  const { signIn, signUp, user, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -24,10 +25,14 @@ function Login() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    const { error } = await signIn(email, password);
+    const { error } = mode === "signin"
+      ? await signIn(email, password)
+      : await signUp(email, password);
     setSubmitting(false);
     if (error) {
       toast.error(error);
+    } else if (mode === "signup") {
+      toast.success("Account created — tell Lovable to grant admin access.");
     } else {
       toast.success("Welcome back, Fatima ✨");
       navigate({ to: "/admin" });
@@ -38,7 +43,9 @@ function Login() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-secondary/60 to-background px-5">
       <div className="w-full max-w-md">
         <Link to="/" className="editorial-eyebrow text-primary">← The Peng Collection</Link>
-        <h1 className="mt-4 font-serif text-4xl">Admin sign in</h1>
+        <h1 className="mt-4 font-serif text-4xl">
+          {mode === "signin" ? "Admin sign in" : "Create admin account"}
+        </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Manage your collection — add, edit and remove products.
         </p>
@@ -60,6 +67,7 @@ function Login() {
             <input
               type="password"
               required
+              minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-2 w-full border border-input bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
@@ -71,13 +79,16 @@ function Login() {
             disabled={submitting}
             className="w-full bg-primary py-4 editorial-eyebrow text-primary-foreground transition-colors hover:bg-burgundy disabled:opacity-50"
           >
-            {submitting ? "Signing in…" : "Sign in"}
+            {submitting ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
           </button>
         </form>
 
-        <p className="mt-4 text-xs text-muted-foreground">
-          Admin access only. Need an account? Ask your developer to set it up.
-        </p>
+        <button
+          onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+          className="mt-4 text-xs text-muted-foreground underline-offset-4 hover:underline"
+        >
+          {mode === "signin" ? "First time? Create your admin account" : "Already have an account? Sign in"}
+        </button>
       </div>
     </div>
   );
