@@ -15,21 +15,23 @@ export type Product = {
   badge?: string;
 };
 
+// Only confirmed prices from Fatima's Instagram are shown. Others say "Price on request"
+// until she sends real pricing — keeps the site honest.
 export const products: Product[] = [
   {
-    id: "abaya-burgundy-rose",
+    id: "abaya-yellow-floral",
     name: "Yellow Bloom Abaya",
     category: "Abayas",
-    price: "₦25,000",
+    price: "₦25,000 with inner · ₦20,000 without",
     image: abayaYellow,
-    caption: "Floating chiffon, hand-finished hem. With inner.",
+    caption: "Floating chiffon, hand-finished hem.",
     badge: "New",
   },
   {
     id: "abaya-paisley",
     name: "Paisley Heritage Abaya",
     category: "Abayas",
-    price: "₦22,000",
+    price: "Price on request",
     image: abayaPaisley,
     caption: "Soft chiffon paisley print, relaxed silhouette.",
   },
@@ -37,32 +39,31 @@ export const products: Product[] = [
     id: "scarf-silk-red",
     name: "Crimson Chain Silk Scarf",
     category: "Scarfs",
-    price: "₦8,500",
+    price: "Price on request",
     image: scarfRed,
     caption: "Square satin silk, baroque chain motif.",
-    badge: "Bestseller",
   },
   {
     id: "scarf-earthtone",
     name: "Earth Edit Chiffon Hijab",
     category: "Scarfs",
-    price: "₦6,000",
+    price: "Price on request",
     image: scarfsEarth,
     caption: "Premium chiffon — terracotta, honey, blush, cocoa.",
   },
   {
     id: "sunglasses-cateye",
-    name: "Cat-Eye Sunglasses Set",
+    name: "Cat-Eye Sunglasses",
     category: "Accessories",
     price: "₦6,000",
     image: sunglasses,
-    caption: "Eight colourways. UV-protected lenses, 140mm frame.",
+    caption: "Eight colourways. UV-protected, 140mm frame.",
   },
   {
     id: "giftbox-signature",
     name: "Peng Signature Giftbox",
     category: "Giftboxes",
-    price: "From ₦15,000",
+    price: "Price on request",
     image: giftbox,
     caption: "Curated by Fatima — silk, scarf and a personal note.",
     badge: "Made-to-order",
