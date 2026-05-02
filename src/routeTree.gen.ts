@@ -17,6 +17,7 @@ import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminLookbookRouteImport } from './routes/admin.lookbook'
 
 const ShopRoute = ShopRouteImport.update({
   id: '/shop',
@@ -58,37 +59,45 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminLookbookRoute = AdminLookbookRouteImport.update({
+  id: '/lookbook',
+  path: '/lookbook',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
   '/login': typeof LoginRoute
   '/lookbook': typeof LookbookRoute
   '/shop': typeof ShopRoute
+  '/admin/lookbook': typeof AdminLookbookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
   '/login': typeof LoginRoute
   '/lookbook': typeof LookbookRoute
   '/shop': typeof ShopRoute
+  '/admin/lookbook': typeof AdminLookbookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
   '/login': typeof LoginRoute
   '/lookbook': typeof LookbookRoute
   '/shop': typeof ShopRoute
+  '/admin/lookbook': typeof AdminLookbookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/lookbook'
     | '/shop'
+    | '/admin/lookbook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/lookbook'
     | '/shop'
+    | '/admin/lookbook'
   id:
     | '__root__'
     | '/'
@@ -121,12 +132,13 @@ export interface FileRouteTypes {
     | '/login'
     | '/lookbook'
     | '/shop'
+    | '/admin/lookbook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   CheckoutRoute: typeof CheckoutRoute
   ContactRoute: typeof ContactRoute
   LoginRoute: typeof LoginRoute
@@ -192,13 +204,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/lookbook': {
+      id: '/admin/lookbook'
+      path: '/lookbook'
+      fullPath: '/admin/lookbook'
+      preLoaderRoute: typeof AdminLookbookRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
+
+interface AdminRouteChildren {
+  AdminLookbookRoute: typeof AdminLookbookRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminLookbookRoute: AdminLookbookRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   CheckoutRoute: CheckoutRoute,
   ContactRoute: ContactRoute,
   LoginRoute: LoginRoute,
