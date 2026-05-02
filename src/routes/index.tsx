@@ -4,7 +4,7 @@ import giftbox from "@/assets/giftbox-hero.jpg";
 import scarfsEarth from "@/assets/scarfs-earthtone.jpg";
 import abayaPaisley from "@/assets/abaya-paisley.jpg";
 import sunglasses from "@/assets/sunglasses-collection.jpg";
-import { products } from "@/lib/products";
+import { useProducts } from "@/hooks/useProducts";
 import { ProductCard } from "@/components/ProductCard";
 import { SITE, waLink } from "@/lib/site";
 
@@ -25,6 +25,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const { products } = useProducts();
   const featured = products.slice(0, 4);
   return (
     <>
