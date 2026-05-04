@@ -3,10 +3,9 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
-import { componentTagger } from "lovable-tagger";
 
 // SPA build for Vercel — no SSR, no Cloudflare Workers.
-export default defineConfig(({ mode }) => ({
+export default defineConfig(() => ({
   plugins: [
     tsConfigPaths(),
     tanstackRouter({
@@ -15,8 +14,7 @@ export default defineConfig(({ mode }) => ({
     }),
     react(),
     tailwindcss(),
-    mode === "development" && componentTagger(),
-  ].filter(Boolean),
+  ],
   server: {
     host: "::",
     port: 8080,
