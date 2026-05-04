@@ -1,4 +1,5 @@
-import { Outlet, Link, createRootRoute, HeadContent, Scripts, useRouterState } from "@tanstack/react-router";
+import { Outlet, Link, createRootRoute, useRouterState } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { WhatsAppFab } from "@/components/WhatsAppFab";
@@ -6,8 +7,6 @@ import { BagDrawer } from "@/components/BagDrawer";
 import { AuthProvider } from "@/lib/auth";
 import { CartProvider } from "@/lib/cart";
 import { Toaster } from "sonner";
-
-import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
   return (
@@ -34,50 +33,47 @@ function NotFoundComponent() {
 export const Route = createRootRoute({
   head: () => ({
     meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
+      { title: "The Peng Collection — Abayas, Silk Scarfs & Giftboxes" },
       {
         name: "description",
         content:
           "Curated abayas, silk scarfs, ready-to-wear dresses and signature giftboxes by Fatima Danjuma. Worldwide delivery from Minna, Nigeria.",
       },
-      { name: "author", content: "The Peng Collection" },
-      { property: "og:title", content: "Lovable App" },
-      {
-        property: "og:description",
-        content:
-          "Luxury abayas, silk scarfs and curated giftboxes by Fatima Danjuma. Worldwide delivery.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Lovable App" },
-      { name: "description", content: "The Peng Collection is an e-commerce website for fashion and gift items." },
-      { property: "og:description", content: "The Peng Collection is an e-commerce website for fashion and gift items." },
-      { name: "twitter:description", content: "The Peng Collection is an e-commerce website for fashion and gift items." },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
   }),
-  shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
 });
 
-function RootShell({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  );
+/**
+ * Client-side head sync — applies per-route `head().meta` to the document
+ * since we no longer have SSR <HeadContent />.
+ */
+function useHeadSync() {
+  const matches = useRouterState({ select: (s) => s.matches });
+  useEffect(() => {
+    const metas = matches.flatMap((m) => (m.meta ?? []) as Array<Record<string, string>>);
+    // Title
+    for (let i = metas.length - 1; i >= 0; i--) {
+      if (metas[i]?.title) {
+        document.title = metas[i].title;
+        break;
+      }
+    }
+    // Remove previously injected meta tags
+    document.querySelectorAll("meta[data-tsr]").forEach((el) => el.remove());
+    for (const m of metas) {
+      if (m.title) continue;
+      const tag = document.createElement("meta");
+      for (const [k, v] of Object.entries(m)) tag.setAttribute(k, v);
+      tag.setAttribute("data-tsr", "");
+      document.head.appendChild(tag);
+    }
+  }, [matches]);
 }
 
 function RootComponent() {
+  useHeadSync();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const isAdminArea = path.startsWith("/admin") || path === "/login";
   return (
