@@ -187,7 +187,7 @@ function Admin() {
             <h1 className="font-serif text-2xl">The Peng Collection</h1>
           </div>
           <div className="flex items-center gap-4">
-            <Link to="/admin/lookbook" className="bg-primary px-4 py-2 editorial-eyebrow text-primary-foreground hover:bg-primary/90">Lookbook →</Link>
+            
             <Link to="/" className="editorial-eyebrow text-foreground hover:text-primary">View site →</Link>
             <button
               onClick={() => { signOut(); navigate({ to: "/" }); }}
