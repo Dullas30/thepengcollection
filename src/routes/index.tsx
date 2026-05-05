@@ -37,7 +37,7 @@ function Index() {
               ✦ Daily Dose of Trend
             </p>
             <h1 className="mt-5 font-serif text-5xl leading-[1.02] text-balance text-foreground fade-up md:text-7xl lg:text-[5.5rem]">
-              Worn by women who <em className="font-serif italic text-primary">arrive</em>.
+              Some days black, some days white, <em className="font-serif italic text-primary">everyday peng</em>.
             </h1>
             <p
               className="mt-6 max-w-md text-base leading-relaxed text-muted-foreground fade-up"
