@@ -52,15 +52,13 @@ export function ProductCard({ product, index = 0 }: { product: DBProduct; index?
           </span>
         )}
       </div>
-      <div className="mt-4 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="editorial-eyebrow text-muted-foreground">{product.category}</p>
-          <h3 className="mt-1 font-serif text-lg leading-tight">{product.name}</h3>
-          {product.description && (
-            <p className="mt-1 text-xs text-muted-foreground">{product.description}</p>
-          )}
-        </div>
-        <p className="font-serif text-base text-primary whitespace-nowrap">{product.price}</p>
+      <div className="mt-4 flex flex-col gap-1">
+        <p className="editorial-eyebrow text-muted-foreground">{product.category}</p>
+        <h3 className="font-serif text-lg leading-tight">{product.name}</h3>
+        {product.description && (
+          <p className="text-xs text-muted-foreground">{product.description}</p>
+        )}
+        <p className="mt-1 font-serif text-sm text-primary break-words">{product.price}</p>
       </div>
       <button
         onClick={onAdd}
