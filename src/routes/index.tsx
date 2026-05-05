@@ -36,7 +36,7 @@ function Index() {
             <p className="editorial-eyebrow text-primary fade-up">
               ✦ Daily Dose of Trend
             </p>
-            <h1 className="mt-5 font-serif text-5xl leading-[1.02] text-balance text-foreground fade-up md:text-7xl lg:text-[5.5rem]">
+            <h1 className="mt-5 font-serif text-[2.5rem] leading-[1.05] text-balance text-foreground fade-up sm:text-5xl md:text-6xl lg:text-[4.25rem] xl:text-[4.75rem]">
               Some days black, some days white, <em className="font-serif italic text-primary">everyday peng</em>.
             </h1>
             <p
