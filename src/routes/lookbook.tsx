@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveImageUrl, type DBProduct } from "@/lib/products-db";
 
 export const Route = createFileRoute("/lookbook")({
   head: () => ({
@@ -17,36 +18,53 @@ export const Route = createFileRoute("/lookbook")({
   component: Lookbook,
 });
 
-type LookbookImage = {
-  id: string;
-  image_url: string;
-  caption: string | null;
-  sort_order: number;
-};
-
-function publicUrl(path: string) {
-  if (path.startsWith("http")) return path;
-  return supabase.storage.from("lookbook").getPublicUrl(path).data.publicUrl;
-}
-
 function Lookbook() {
-  const [items, setItems] = useState<LookbookImage[]>([]);
+  const [items, setItems] = useState<DBProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
-    supabase
-      .from("lookbook_images")
-      .select("*")
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        if (cancelled) return;
-        setItems((data ?? []) as LookbookImage[]);
-        setLoading(false);
-      });
-    return () => { cancelled = true; };
+    const load = async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("*")
+        .eq("active", true)
+        .not("image_url", "is", null)
+        .order("created_at", { ascending: false });
+      if (cancelled) return;
+      setItems((data ?? []) as DBProduct[]);
+      setLoading(false);
+    };
+    load();
+
+    // Realtime sync — refresh when products change
+    const channel = supabase
+      .channel("lookbook-products")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "products" },
+        () => load(),
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
   }, []);
+
+  // "Flashing & changing" — rotate the visible window every few seconds
+  useEffect(() => {
+    if (items.length <= 6) return;
+    const id = setInterval(() => setTick((t) => t + 1), 3500);
+    return () => clearInterval(id);
+  }, [items.length]);
+
+  // Pick a rotating window of items (covers grid)
+  const visible = items.length
+    ? Array.from({ length: Math.min(9, items.length) }, (_, i) => items[(tick + i) % items.length])
+    : [];
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-14 md:px-8 md:py-20">
@@ -57,34 +75,33 @@ function Lookbook() {
         </h1>
         <p className="mt-4 text-muted-foreground">
           Slow images of the pieces we love most — styled, layered and worn the
-          way they were meant to be.
+          way they were meant to be. Updates live as new pieces drop.
         </p>
       </div>
 
       {loading ? (
         <p className="mt-20 text-center text-muted-foreground">Loading…</p>
-      ) : items.length === 0 ? (
+      ) : visible.length === 0 ? (
         <p className="mt-20 text-center text-muted-foreground">
           New looks dropping soon. Follow @the_peng_collection_ on Instagram for first access.
         </p>
       ) : (
         <div className="mt-14 grid auto-rows-[200px] grid-cols-2 gap-3 md:auto-rows-[280px] md:grid-cols-3 md:gap-5">
-          {items.map((img, i) => (
+          {visible.map((p, i) => (
             <figure
-              key={img.id}
-              className={`group relative overflow-hidden bg-muted ${i % 5 === 0 ? "row-span-2" : ""}`}
+              key={`${p.id}-${tick}-${i}`}
+              className={`lookbook-tile group relative overflow-hidden bg-muted ${i % 5 === 0 ? "row-span-2" : ""}`}
+              style={{ animationDelay: `${i * 80}ms` }}
             >
               <img
-                src={publicUrl(img.image_url)}
-                alt={img.caption ?? "Lookbook image"}
+                src={resolveImageUrl(p.image_url)}
+                alt={p.name}
                 loading="lazy"
                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
-              {img.caption && (
-                <figcaption className="absolute bottom-3 left-3 bg-background/85 px-3 py-1.5 editorial-eyebrow text-primary">
-                  {img.caption}
-                </figcaption>
-              )}
+              <figcaption className="absolute bottom-3 left-3 bg-background/85 px-3 py-1.5 editorial-eyebrow text-primary">
+                {p.name}
+              </figcaption>
             </figure>
           ))}
         </div>
