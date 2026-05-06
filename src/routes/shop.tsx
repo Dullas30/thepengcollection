@@ -48,9 +48,7 @@ function Shop() {
       );
     }
     if (sort === "newest") {
-      list = [...list].sort((a, b) =>
-        (b.created_at ?? "").localeCompare(a.created_at ?? "")
-      );
+      list = [...list].sort((a, b) => (b.sort_order ?? 0) - (a.sort_order ?? 0));
     } else if (sort === "name") {
       list = [...list].sort((a, b) => a.name.localeCompare(b.name));
     }
