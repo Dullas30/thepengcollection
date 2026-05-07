@@ -47,8 +47,8 @@ function About() {
           </div>
 
           <div className="mt-10 grid grid-cols-2 gap-6 border-t border-border pt-8 md:grid-cols-4">
-            <Stat n="2,440" l="Followers" />
-            <Stat n="326" l="Pieces shared" />
+            <Stat n="2,440+" l="Followers" />
+            <Stat n="326+" l="Pieces shared" />
             <Stat n="100%" l="Hand-curated" />
             <Stat n="🌍" l="Worldwide ship" />
           </div>
