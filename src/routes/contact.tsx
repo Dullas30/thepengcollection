@@ -21,7 +21,7 @@ function Contact() {
     <div className="mx-auto max-w-7xl px-5 py-14 md:px-8 md:py-20">
       <div className="max-w-2xl">
         <p className="editorial-eyebrow text-primary">Get in touch</p>
-        <h1 className="mt-3 font-serif text-5xl leading-tight md:text-6xl">
+        <h1 className="mt-3 font-serif text-4xl leading-tight sm:text-5xl md:text-6xl">
           Let's style something <em className="italic text-primary">together</em>.
         </h1>
         <p className="mt-4 text-muted-foreground">
