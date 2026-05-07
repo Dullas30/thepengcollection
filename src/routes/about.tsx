@@ -23,7 +23,7 @@ function About() {
       <section className="mx-auto grid max-w-7xl gap-12 px-5 py-14 md:grid-cols-12 md:gap-16 md:px-8 md:py-20">
         <div className="md:col-span-7">
           <p className="editorial-eyebrow text-primary">Our Story</p>
-          <h1 className="mt-3 font-serif text-5xl leading-[1.05] md:text-6xl">
+          <h1 className="mt-3 font-serif text-4xl leading-[1.05] sm:text-5xl md:text-6xl">
             Pieces with a <em className="italic text-primary">pulse</em>.
           </h1>
           <div className="mt-8 space-y-5 text-base leading-relaxed text-muted-foreground md:text-lg">
