@@ -4,7 +4,7 @@ import { SITE, waLink } from "@/lib/site";
 export function SiteFooter() {
   return (
     <footer className="mt-24 border-t border-border bg-secondary/40">
-      <div className="mx-auto grid max-w-7xl gap-12 px-5 py-16 md:grid-cols-4 md:px-8">
+      <div className="mx-auto grid max-w-7xl gap-12 px-5 py-16 sm:grid-cols-2 md:px-8 lg:grid-cols-4">
         <div className="md:col-span-2">
           <h3 className="font-serif text-3xl leading-tight">
             The Peng Collection
