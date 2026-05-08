@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CATEGORIES, resolveImageUrl, type DBProduct } from "@/lib/products-db";
 import { toast } from "sonner";
 import {
-  Package, CheckCircle2, AlertTriangle, Boxes,
+  Package, Boxes,
   Search, Plus, Minus, Pencil, Trash2, Upload, X, ImageIcon,
   LogOut, ExternalLink, Filter,
 } from "lucide-react";
@@ -499,31 +499,3 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Stat({
-  label, value, icon: Icon, accent, warn,
-}: {
-  label: string; value: number;
-  icon: React.ComponentType<{ className?: string }>;
-  accent?: boolean; warn?: boolean;
-}) {
-  return (
-    <div
-      className={`relative overflow-hidden border p-4 ${
-        accent ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"
-      }`}
-      style={{ boxShadow: "var(--shadow-soft)" }}
-    >
-      <div className="flex items-start justify-between">
-        <p className={`editorial-eyebrow ${
-          accent ? "text-primary-foreground/85" : warn ? "text-destructive" : "text-muted-foreground"
-        }`}>
-          {label}
-        </p>
-        <Icon className={`h-4 w-4 ${
-          accent ? "text-primary-foreground/85" : warn ? "text-destructive" : "text-muted-foreground"
-        }`} />
-      </div>
-      <p className="mt-2 font-serif text-3xl tabular-nums">{value}</p>
-    </div>
-  );
-}
