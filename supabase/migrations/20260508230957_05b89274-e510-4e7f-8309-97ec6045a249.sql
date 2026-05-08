@@ -1,0 +1,1 @@
+UPDATE public.products SET badge = NULL WHERE badge ILIKE '%made%order%';
