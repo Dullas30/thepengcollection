@@ -230,16 +230,8 @@ function Admin() {
       </header>
 
       <div className="mx-auto max-w-7xl px-5 py-8 md:px-8">
-        {/* Stat cards */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <Stat label="Pieces" value={stats.total} icon={Package} />
-          <Stat label="In stock" value={stats.inStock} icon={CheckCircle2} accent />
-          <Stat label="Sold out" value={stats.out} icon={AlertTriangle} warn={stats.out > 0} />
-          <Stat label="Units total" value={stats.totalUnits} icon={Boxes} />
-        </div>
-
         {/* Toolbar */}
-        <div className="mt-8 flex flex-col gap-3 border border-border bg-card p-3 md:flex-row md:items-center md:p-4" style={{ boxShadow: "var(--shadow-soft)" }}>
+        <div className="flex flex-col gap-3 border border-border bg-card p-3 md:flex-row md:items-center md:p-4" style={{ boxShadow: "var(--shadow-soft)" }}>
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -436,9 +428,6 @@ function Admin() {
                           )}
                           {isOut && (
                             <span className="editorial-eyebrow rounded bg-destructive/15 px-1.5 py-0.5 text-[10px] text-destructive">Sold out</span>
-                          )}
-                          {!isOut && stock <= 3 && (
-                            <span className="editorial-eyebrow rounded bg-primary/15 px-1.5 py-0.5 text-[10px] text-primary">Low · {stock}</span>
                           )}
                         </div>
                         <h3 className="truncate font-serif text-lg">{p.name}</h3>
