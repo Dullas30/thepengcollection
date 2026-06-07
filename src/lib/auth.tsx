@@ -21,43 +21,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up listener FIRST
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+    let alive = true;
+
+    const checkAdmin = async (userId: string) => {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .eq("role", "admin")
+        .maybeSingle();
+      return !!data;
+    };
+
+    const applySession = async (sess: Session | null) => {
       setSession(sess);
       setUser(sess?.user ?? null);
-      // Defer admin check (avoid deadlock per Supabase guidance)
-      if (sess?.user) {
-        setTimeout(async () => {
-          const { data } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", sess.user.id)
-            .eq("role", "admin")
-            .maybeSingle();
-          setIsAdmin(!!data);
-        }, 0);
-      } else {
+      if (!sess?.user) {
         setIsAdmin(false);
+        setLoading(false);
+        return;
       }
+
+      setLoading(true);
+      const admin = await checkAdmin(sess.user.id);
+      if (!alive) return;
+      setIsAdmin(admin);
+      setLoading(false);
+    };
+
+    // Set up listener FIRST
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+      // Defer admin check (avoid deadlock per Supabase guidance)
+      setTimeout(() => { void applySession(sess); }, 0);
     });
 
     // THEN get current session
     supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s);
-      setUser(s?.user ?? null);
-      setLoading(false);
-      if (s?.user) {
-        supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", s.user.id)
-          .eq("role", "admin")
-          .maybeSingle()
-          .then(({ data }) => setIsAdmin(!!data));
-      }
+      void applySession(s);
     });
 
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      alive = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
