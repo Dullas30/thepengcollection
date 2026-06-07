@@ -30,7 +30,6 @@ function Login() {
       toast.error(error);
     } else {
       toast.success("Welcome back, Fatima ✨");
-      navigate({ to: "/admin" });
     }
   };
 
