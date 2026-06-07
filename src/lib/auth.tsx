@@ -50,7 +50,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     // Set up listener FIRST
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
+      if (event === "INITIAL_SESSION") return;
       // Defer admin check (avoid deadlock per Supabase guidance)
       setTimeout(() => { void applySession(sess); }, 0);
     });
