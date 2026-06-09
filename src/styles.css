@@ -24,6 +24,13 @@
   font-display: swap;
   src: url("https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2") format("woff2");
 }
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url("https://fonts.gstatic.com/s/cormorantgaramond/v16/co3YmX5slCNuHLi8bLeY9MK7whWMhyjornFLsS6V7w.woff2") format("woff2");
+}
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -153,7 +160,14 @@
     text-transform: uppercase;
   }
 
+  .font-display { font-family: "Cormorant Garamond", "Fraunces", Georgia, serif; font-weight: 400; letter-spacing: -0.01em; }
+
   .text-balance { text-wrap: balance; }
+
+  .gold-rule {
+    background-image: linear-gradient(90deg, transparent, var(--gold) 20%, var(--gold) 80%, transparent);
+    height: 1px;
+  }
 
   .grain::after {
     content: "";
