@@ -160,7 +160,14 @@
     text-transform: uppercase;
   }
 
+  .font-display { font-family: "Cormorant Garamond", "Fraunces", Georgia, serif; font-weight: 400; letter-spacing: -0.01em; }
+
   .text-balance { text-wrap: balance; }
+
+  .gold-rule {
+    background-image: linear-gradient(90deg, transparent, var(--gold) 20%, var(--gold) 80%, transparent);
+    height: 1px;
+  }
 
   .grain::after {
     content: "";
