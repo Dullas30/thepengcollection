@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -18,44 +18,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const lastUserId = useRef<string | null>(null);
 
   useEffect(() => {
     let alive = true;
 
-    const checkAdmin = async (userId: string) => {
-      const { data } = await supabase
+    const checkAdmin = async (userId: string): Promise<boolean> => {
+      const { data, error } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", userId)
         .eq("role", "admin")
         .maybeSingle();
+      if (error) {
+        console.error("[auth] role check failed:", error.message);
+        return false;
+      }
       return !!data;
     };
 
     const applySession = async (sess: Session | null) => {
+      if (!alive) return;
       setSession(sess);
       setUser(sess?.user ?? null);
-      if (!sess?.user) {
+
+      const uid = sess?.user?.id ?? null;
+      if (!uid) {
+        lastUserId.current = null;
         setIsAdmin(false);
         setLoading(false);
         return;
       }
 
-      setLoading(true);
-      const admin = await checkAdmin(sess.user.id);
+      // Avoid re-running admin check for the same user on token refreshes
+      if (lastUserId.current === uid && !loading) {
+        setLoading(false);
+        return;
+      }
+      lastUserId.current = uid;
+
+      const admin = await checkAdmin(uid);
       if (!alive) return;
       setIsAdmin(admin);
       setLoading(false);
     };
 
-    // Set up listener FIRST
-    const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
-      if (event === "INITIAL_SESSION") return;
-      // Defer admin check (avoid deadlock per Supabase guidance)
+    // Listener first (do NOT ignore INITIAL_SESSION — it's our source of truth on hydrate)
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+      // Defer to avoid Supabase deadlock when calling supabase from inside callback
       setTimeout(() => { void applySession(sess); }, 0);
     });
 
-    // THEN get current session
+    // Fallback in case INITIAL_SESSION never fires
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       void applySession(s);
     });
@@ -64,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       alive = false;
       sub.subscription.unsubscribe();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const signIn = async (email: string, password: string) => {
